@@ -1,0 +1,24 @@
+moar-chives
+Copyright (c) iyra 2017
+License: CC0 1.0 Universal Public Domain Dedication
+https://creativecommons.org/publicdomain/zero/1.0/
+
+moar-chives is a script designed to back up single webpages by simply 
+fetching them and saving them
+it also has a functionality for {4,8}chan threads, in which it will save 
+the thread
+and any images/files linked (including multiple images/files as on 
+8chan)
+
+it writes archived files to ./pub/arch and stores lists of them in 
+./linkroll.md (simple pages)
+and/or ./chanroll.md (imageboard threads)
+
+this means you can use it with `perc' (https://github.com/iyra/perc), 
+running from your site directory:
+    ../archive.py http://example.com
+assuming archive.py is in ~/site and you are in ~/site/example.com
+
+external dependencies: BeautifulSoup (bs4) on Python 3
+Future stability is not guaranteed due to "API" changes on imageboard 
+sites, use at your own risk.
