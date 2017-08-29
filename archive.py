@@ -26,6 +26,50 @@ from bs4 import BeautifulSoup
 import datetime
 import os
 import re
+from pathlib import Path
+# def loveisover_posts(board, thread, fragment):
+#     posts = []
+#     op_post = soup.find('article', class_='post_is_op')
+#     if fragment=='nil':
+#         replies = op_post.find('aside', class_='posts')
+#     else:
+#         if fragment != thread:
+#             replies = [op_post.find('aside', class_='posts').find('article', id=fragment)]
+#         else:
+#             replies = []
+#     posts.append({
+#         'op': True,
+#         'name': op_post.find('header').find('div', class_='post_data').find('span', class_='post_poster_data').get_text(),
+#         'date': op_post.find('header').find('div', class_='post_data').find('span', class_='time_wrap').find('time').get_text(),
+#         'id': op_post.find('header').find('div', class_='post_data').find('a').get_text(),
+#         'message': op_post.find('div', class_='text').get_text(),
+#         'files': []})
+#     if op_post.find('div', class_='thread_image_box') is not None:
+#          posts[0]['files'].append([
+#              op_post.find_all('div', class_='thread_image_box', limit=1).find_all('div', class_='post_file', limit=1).find('a', class_='post_file_filename').get('href'),
+#              op_post.find_all('div', class_='thread_image_box', limit=1).find_all('div', class_='post_file', limit=1).get_text(),
+#              op_post.find_all('div', class_='thread_image_box', limit=1).find_all('a', class_='thread_image_link', limit=1).find('img', class_='thread_image').get('src'),
+#              op_post.find_all('div', class_='thread_image_box', limit=1).find_all('div', class_='post_file', limit=1).find('a', class_='post_file_filename').get_text()])
+             
+#     for reply in replies:
+#         d = {}
+#         pdata = reply.find('article', class_='post').find('div', class_='post_wrapper').find('header').find('div', class_='post_data')
+#         d['subject'] = pdata.find(class_='post_title').get_text()
+#         d['op'] = False
+#         d['name'] = pdata.find('span', class_='post_poster_data').get_text()
+#         d['date'] = pdata.find('span', class_='time_wrap').find('time').get_text()
+#         d['id'] = pdata.find('a').get_text()
+#         d['message'] = reply.find('article', class_='post').find('div', class_='post_wrapper').find('div', class_='text').get_text()
+#         d['files']
+#         if reply.find('article', class_='post').find('div', class_='post_wrapper').find('div', class_='post_file') is not None:
+#             fileinf = reply.find('article', class_='post').find('div', class_='post_wrapper').find('div', class_='post_file')
+#             d['files'].append([
+#                 fileinf.find('a', class_='post_file_filename').get('href'),
+#                 fileinf.find('span', class_='post_file_metadata').get_text(),
+#                 reply.find('article', class_='post').find('div', class_='post_wrapper').find('div', class_='thread_image_box').find('a', class_='thread_image_link').find('img', class_='post_image').get('src'),
+#                 fileinf.find('a', class_='post_file_filename').get_text()])
+#         posts.append(d)
+#     return posts
 
 user_agent = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'
 def dlfile(fileurl, filepath):
@@ -136,6 +180,7 @@ for url in urls:
         with urllib.request.urlopen(req) as response:
             p = response.read()
             domain = "{0.netloc}".format(urllib.parse.urlsplit(url))
+            #if domain not in ["8ch.net", "boards.4chan.org", "archive.loveisover.me"]:
             if domain not in ["8ch.net", "boards.4chan.org"]:
                 soup = BeautifulSoup(p, "html.parser")
                 titles[url] = [soup.title.string, p, response.headers.get_content_charset()]
@@ -168,6 +213,18 @@ for url in urls:
                             post = m.group(1)
                     else:
                         print(url+": malformed 8chan thread URL")
+                # if domain=="archive.loveisover.me":
+                #     path_pat = re.compile('^\/([A-Za-z0-9]+)\/thread/(\d+)\/?')
+                #     frag = re.compile('^(\d+)')
+                #     m = path_pat.match(target.path)
+                #     if m:
+                #         board = m.group(1)
+                #         thread = m.group(2)
+                #         if len(target.fragment) > 0 and frag.match(target.fragment) and target.fragment != thread:
+                #             m = frag.match(target.fragment)
+                #             post = m.group(1)
+                #     else:
+                #         print(url+": malformed loveisover thread URL")
                 # contents, charset, board, thread, post
                 chans[url] = [domain, p, response.headers.get_content_charset(), board, thread, post]
     except urllib.request.HTTPError as e:
@@ -177,10 +234,13 @@ if len(chans.items()):
     stored_threads = []
     stored_titles = []
     tdirs = []
-    with open("pub/chan_threads", 'r') as f:
-        for line in f:
-            stored_threads.append(line[:-1].split('\t')[:-1])
-            stored_titles.append(line[:-1].split('\t')[-1])
+    if not os.path.exists("pub/chan_threads"):
+        open("pub/chan_threads", 'a').close()
+    else:
+        with open("pub/chan_threads", 'r') as f:
+            for line in f:
+                stored_threads.append(line[:-1].split('\t')[:-1])
+                stored_titles.append(line[:-1].split('\t')[-1])
     for u,info in chans.items():
         info[1] = info[1].decode(info[2])
         soup = BeautifulSoup(info[1], "html.parser")
@@ -286,6 +346,8 @@ if len(chans.items()):
                     gitem.find(class_='fileinfo').find(class_='unimportant').get_text(),
                     gitem.find(class_='post-image').get('src'), # 8chan puts the post-image attribute on the thumbnail image for some reason
                     tt])
+        if info[0] == "archive.loveisover.me":
+            threadposts = loveisover_posts(info[3], info[4], info[5])
         # threadposts contains all the posts in the thread now
         print(str(threadposts))
         writethread(info[0], info[3], info[4], threadposts, info[5], u, soup.title.string)
