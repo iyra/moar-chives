@@ -16,7 +16,7 @@ and/or ./chanroll.md (imageboard threads)
 
 this means you can use it with `perc' (https://github.com/iyra/perc), 
 running from your site directory:
-    ../archive.py http://example.com
+    python3 ../archive.py http://example.com
 assuming archive.py is in ~/site and you are in ~/site/example.com
 
 external dependencies: BeautifulSoup (bs4) on Python 3
