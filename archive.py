@@ -233,13 +233,15 @@ for url in urls:
 if len(chans.items()):
     stored_threads = []
     stored_titles = []
+    stored_dates = []
     tdirs = []
     if not os.path.exists("pub/chan_threads"):
         open("pub/chan_threads", 'a').close()
     else:
         with open("pub/chan_threads", 'r') as f:
             for line in f:
-                stored_threads.append(line[:-1].split('\t')[:-1])
+                stored_threads.append(line[:-1].split('\t')[:-2])
+                stored_dates.append(line[:-1].split('\t')[-2])
                 stored_titles.append(line[:-1].split('\t')[-1])
     for u,info in chans.items():
         info[1] = info[1].decode(info[2])
@@ -248,6 +250,12 @@ if len(chans.items()):
         if [info[0], info[3], info[4], info[5]] not in stored_threads:
             stored_threads.append([info[0], info[3], info[4], info[5]])
             stored_titles.append(soup.title.string.replace('\t', ' ').replace('\n', ' '))
+            stored_dates.append(datetime.datetime.now().strftime("%Y-%m-%d"))
+        else:
+            # the thread is already archived but we need to update the date
+            for i,k in enumerate(stored_threads):
+                if stored_threads[i] == [info[0], info[3], info[4], info[5]]:
+                    stored_dates[i] = datetime.datetime.now().strftime("%Y-%m-%d")
         if info[0]=="boards.4chan.org":
             posts = soup.find_all(class_='post')
             if info[5] != 'nil':
@@ -353,11 +361,11 @@ if len(chans.items()):
         writethread(info[0], info[3], info[4], threadposts, info[5], u, soup.title.string)
     with open("pub/chan_threads", 'w') as f:
         for i,st in enumerate(stored_threads):
-            f.write('\t'.join(st)+"\t"+stored_titles[i]+"\n")
+            f.write('\t'.join(st)+"\t"+stored_dates[i]+"\t"+stored_titles[i]+"\n")
     with open("chanroll.md", 'w') as f:
         f.write("Chanroll\n# Chanroll\nA list of selected threads from 4chan and 8chan I have chosen to archive for posterity. All post files are included.\n\n")
         for i,st in enumerate(stored_threads):
-            f.write("* <a href=\"{}index.html\">{} backup</a> ({})\n".format(threadlocation(st[0],st[1],st[2],st[3]), stored_titles[i], datetime.datetime.now().strftime("%Y-%m-%d")))
+            f.write("* <a href=\"{}index.html\">{} backup</a> ({})\n".format(threadlocation(st[0],st[1],st[2],st[3]), stored_titles[i], stored_dates[i]))
 
 with open("linkroll.md", 'a') as f:
     for key, value in titles.items():
